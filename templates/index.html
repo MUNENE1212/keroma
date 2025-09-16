@@ -37,40 +37,56 @@
                     KE-ROUMA
                     <span class="ai-badge">AI Ready</span>
                 </div>
+
+                <!-- Hamburger Menu Button (Mobile Only) -->
+                <button class="hamburger-menu" onclick="toggleMobileMenu()" aria-label="Toggle navigation menu">
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
+
                 <nav class="main-nav">
+                    <!-- Mobile Menu Close Button -->
+                    <button class="mobile-menu-close" onclick="closeMobileMenu()" aria-label="Close menu">
+                        <i class="fas fa-times"></i>
+                    </button>
                     <ul class="nav-menu">
                         <li><a href="#" class="nav-link active" data-page="home">
-                            <i class="fas fa-home"></i> Home
+                            <i class="fas fa-home"></i> <span>Home</span>
                         </a></li>
                         <li><a href="#" class="nav-link" data-page="generate">
-                            <i class="fas fa-robot"></i> Generate
+                            <i class="fas fa-robot"></i> <span>Generate</span>
                         </a></li>
                         <li><a href="#" class="nav-link" data-page="discover">
-                            <i class="fas fa-compass"></i> Discover
+                            <i class="fas fa-compass"></i> <span>Discover</span>
                         </a></li>
                         <li><a href="#" class="nav-link" data-page="kitchen">
-                            <i class="fas fa-fire"></i> Kitchen
+                            <i class="fas fa-fire"></i> <span>Kitchen</span>
                         </a></li>
                         <li><a href="#" class="nav-link" data-page="saved">
-                            <i class="fas fa-heart"></i> Saved
+                            <i class="fas fa-heart"></i> <span>Saved</span>
                         </a></li>
                         <li><a href="#" class="nav-link" data-page="premium">
-                            <i class="fas fa-crown"></i> Premium
+                            <i class="fas fa-crown"></i> <span>Premium</span>
                         </a></li>
                     </ul>
                 </nav>
+
                 <div class="auth-section">
                     <div class="auth-buttons">
                         <button class="btn-outline" onclick="showLoginModal()">
-                            <i class="fas fa-sign-in-alt"></i> Login
+                            <i class="fas fa-sign-in-alt"></i> <span>Login</span>
                         </button>
                         <button class="btn-primary" onclick="showRegisterModal()">
-                            <i class="fas fa-user-plus"></i> Register
+                            <i class="fas fa-user-plus"></i> <span>Register</span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Mobile Menu Overlay -->
+        <div class="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
     </header>
 
     <!-- Main Application Content -->
@@ -274,17 +290,17 @@
                     <div class="kitchen-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; margin: 3rem 0;">
                         <div class="stat-card" style="background: rgba(39, 174, 96, 0.1); padding: 2rem; border-radius: 15px; text-align: center; border: 2px solid rgba(39, 174, 96, 0.3);">
                             <i class="fas fa-utensils" style="font-size: 3rem; color: var(--success); margin-bottom: 1rem;"></i>
-                            <h3 style="color: var(--success); margin-bottom: 0.5rem;">12</h3>
+                            <h3 style="color: var(--success); margin-bottom: 0.5rem;" id="recipesCooked">0</h3>
                             <p>Recipes Cooked</p>
                         </div>
                         <div class="stat-card" style="background: rgba(243, 156, 18, 0.1); padding: 2rem; border-radius: 15px; text-align: center; border: 2px solid rgba(243, 156, 18, 0.3);">
                             <i class="fas fa-clock" style="font-size: 3rem; color: var(--accent-solid); margin-bottom: 1rem;"></i>
-                            <h3 style="color: var(--accent-solid); margin-bottom: 0.5rem;">2h 30m</h3>
+                            <h3 style="color: var(--accent-solid); margin-bottom: 0.5rem;" id="cookingTimeSaved">0h 0m</h3>
                             <p>Cooking Time Saved</p>
                         </div>
                         <div class="stat-card" style="background: rgba(231, 76, 60, 0.1); padding: 2rem; border-radius: 15px; text-align: center; border: 2px solid rgba(231, 76, 60, 0.3);">
                             <i class="fas fa-heart" style="font-size: 3rem; color: var(--error); margin-bottom: 1rem;"></i>
-                            <h3 style="color: var(--error); margin-bottom: 0.5rem;">8</h3>
+                            <h3 style="color: var(--error); margin-bottom: 0.5rem;" id="favoriteRecipes">0</h3>
                             <p>Favorite Dishes</p>
                         </div>
                     </div>

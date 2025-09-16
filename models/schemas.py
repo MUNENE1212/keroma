@@ -66,10 +66,11 @@ class User(UserBase):
         arbitrary_types_allowed=True,
         json_encoders={ObjectId: str}
     )
-    
+
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
     password: str
     saved_recipes: List[str] = []
+    favorite_recipes: List[str] = []
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 # Recipe Models

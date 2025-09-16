@@ -45,6 +45,9 @@ tests/
 # Node modules (if any)
 node_modules/
 
+# Mobile app (removed from project)
+mobile-app/
+
 # Temporary files
 *.tmp
 *.temp

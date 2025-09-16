@@ -255,7 +255,8 @@ const Navigation = {
                     }
                     break;
                 case 'kitchen':
-                    // Kitchen page specific initialization if needed
+                    // Kitchen page specific initialization
+                    loadKitchenStats();
                     break;
                 case 'home':
                     // Home page specific initialization if needed
@@ -1712,8 +1713,108 @@ function saveHighlightRecipe(index) {
     }
 }
 
+// Kitchen Stats Management
+async function loadKitchenStats() {
+    if (!AppState.currentUser) {
+        showNotification('Please login to view your kitchen stats', 'error');
+        return;
+    }
+
+    try {
+        const response = await apiCall('/api/kitchen/stats');
+
+        if (response.success && response.stats) {
+            // Update the stats in the UI
+            const recipesCookedEl = document.getElementById('recipesCooked');
+            const cookingTimeSavedEl = document.getElementById('cookingTimeSaved');
+            const favoriteRecipesEl = document.getElementById('favoriteRecipes');
+
+            if (recipesCookedEl) recipesCookedEl.textContent = response.stats.recipes_cooked;
+            if (cookingTimeSavedEl) cookingTimeSavedEl.textContent = response.stats.cooking_time_saved;
+            if (favoriteRecipesEl) favoriteRecipesEl.textContent = response.stats.favorite_recipes;
+        }
+    } catch (error) {
+        console.error('Failed to load kitchen stats:', error);
+        showNotification('Failed to load kitchen statistics', 'error');
+    }
+}
+
+// Mobile Menu Management
+let mobileMenuOpen = false;
+
+function toggleMobileMenu() {
+    const hamburgerMenu = document.querySelector('.hamburger-menu');
+    const mainNav = document.querySelector('.main-nav');
+    const mobileOverlay = document.querySelector('.mobile-menu-overlay');
+
+    mobileMenuOpen = !mobileMenuOpen;
+
+    if (mobileMenuOpen) {
+        hamburgerMenu.classList.add('active');
+        mainNav.classList.add('mobile-open');
+        mobileOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    } else {
+        closeMobileMenu();
+    }
+}
+
+function closeMobileMenu() {
+    const hamburgerMenu = document.querySelector('.hamburger-menu');
+    const mainNav = document.querySelector('.main-nav');
+    const mobileOverlay = document.querySelector('.mobile-menu-overlay');
+
+    mobileMenuOpen = false;
+    hamburgerMenu.classList.remove('active');
+    mainNav.classList.remove('mobile-open');
+    mobileOverlay.classList.remove('active');
+    document.body.style.overflow = ''; // Restore scrolling
+}
+
+// Auto-close mobile menu when clicking on menu items
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click event listeners to all nav links for auto-close functionality
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            // Close mobile menu after a short delay to allow navigation to complete
+            setTimeout(() => {
+                if (mobileMenuOpen) {
+                    closeMobileMenu();
+                }
+            }, 300);
+        });
+    });
+
+    // Also close menu when clicking on overlay
+    const mobileOverlay = document.querySelector('.mobile-menu-overlay');
+    if (mobileOverlay) {
+        mobileOverlay.addEventListener('click', function() {
+            if (mobileMenuOpen) {
+                closeMobileMenu();
+            }
+        });
+    }
+});
+
+// Close mobile menu when clicking on a nav link
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('nav-link') && mobileMenuOpen) {
+        closeMobileMenu();
+    }
+});
+
+// Close mobile menu on window resize if desktop size
+window.addEventListener('resize', function() {
+    if (window.innerWidth > 768 && mobileMenuOpen) {
+        closeMobileMenu();
+    }
+});
+
 // Global function bindings for HTML onclick compatibility
 window.showLoginModal = function() { Auth.showLoginModal(); };
+window.toggleMobileMenu = toggleMobileMenu;
+window.closeMobileMenu = closeMobileMenu;
 window.showRegisterModal = function() { Auth.showRegisterModal(); };
 window.generateRecipes = () => RecipeGenerator.generateRecipes();
 window.setMood = (mood) => RecipeGenerator.setMood(mood);
@@ -2638,3 +2739,180 @@ window.onclick = function(event) {
         }
     });
 };
+
+// Zoom/Pinch handling - Prevent layout breaks and double-section issues
+const ZoomHandler = {
+    currentZoom: 1,
+    isZoomed: false,
+
+    init() {
+        // Detect zoom changes
+        this.detectZoom();
+
+        // Listen for resize events (which can indicate zoom changes)
+        window.addEventListener('resize', this.handleZoomChange.bind(this));
+
+        // Listen for orientation changes
+        window.addEventListener('orientationchange', this.handleOrientationChange.bind(this));
+
+        // Listen for visual viewport changes (modern browsers)
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', this.handleVisualViewportChange.bind(this));
+        }
+
+        console.log('Zoom handler initialized');
+    },
+
+    detectZoom() {
+        // Method 1: Using devicePixelRatio
+        const devicePixelRatio = window.devicePixelRatio || 1;
+
+        // Method 2: Using screen width comparison
+        const screenWidth = screen.width;
+        const windowWidth = window.innerWidth;
+        const zoomRatio = (screenWidth / windowWidth) * devicePixelRatio;
+
+        this.currentZoom = zoomRatio;
+        this.isZoomed = zoomRatio > 1.1; // Consider zoomed if > 110%
+
+        // Apply zoom-specific styles
+        this.applyZoomStyles();
+
+        console.log(`Zoom detected: ${this.currentZoom.toFixed(2)}x, isZoomed: ${this.isZoomed}`);
+    },
+
+    handleZoomChange() {
+        // Debounce zoom detection
+        clearTimeout(this.zoomTimeout);
+        this.zoomTimeout = setTimeout(() => {
+            this.detectZoom();
+        }, 100);
+    },
+
+    handleOrientationChange() {
+        // Handle orientation changes which can affect zoom
+        setTimeout(() => {
+            this.detectZoom();
+        }, 500);
+    },
+
+    handleVisualViewportChange() {
+        // Modern browsers provide visual viewport API
+        if (window.visualViewport) {
+            const scale = window.visualViewport.scale;
+            this.currentZoom = scale;
+            this.isZoomed = scale > 1.1;
+            this.applyZoomStyles();
+        }
+    },
+
+    applyZoomStyles() {
+        const body = document.body;
+        const html = document.documentElement;
+
+        if (this.isZoomed) {
+            // Apply zoom-specific styles
+            body.classList.add('zoomed-view');
+            html.classList.add('zoomed-view');
+
+            // Force single column layout
+            this.forceSingleColumn();
+
+            // Adjust chat button position
+            this.adjustChatButton();
+
+            // Prevent horizontal scrolling
+            this.preventHorizontalScroll();
+
+        } else {
+            // Remove zoom-specific styles
+            body.classList.remove('zoomed-view');
+            html.classList.remove('zoomed-view');
+        }
+    },
+
+    forceSingleColumn() {
+        // Ensure all page modules are displayed in single column
+        const pageModules = document.querySelectorAll('.page-module');
+        pageModules.forEach(module => {
+            module.style.width = '100%';
+            module.style.maxWidth = '100%';
+            module.style.overflowX = 'hidden';
+        });
+
+        // Force container to be full width
+        const containers = document.querySelectorAll('.container');
+        containers.forEach(container => {
+            container.style.width = '100%';
+            container.style.maxWidth = '1200px';
+            container.style.margin = '0 auto';
+            container.style.padding = '0 1rem';
+            container.style.boxSizing = 'border-box';
+            container.style.overflowX = 'hidden';
+        });
+    },
+
+    adjustChatButton() {
+        const chatToggle = document.querySelector('.chat-toggle');
+        if (chatToggle) {
+            // Ensure chat button stays in viewport
+            chatToggle.style.position = 'fixed';
+            chatToggle.style.right = 'max(20px, 2vw)';
+            chatToggle.style.bottom = 'max(20px, 2vh)';
+            chatToggle.style.zIndex = '1000';
+            chatToggle.style.transform = 'none';
+            chatToggle.style.left = 'auto';
+            chatToggle.style.width = '60px';
+            chatToggle.style.height = '60px';
+            chatToggle.style.display = 'flex';
+            chatToggle.style.alignItems = 'center';
+            chatToggle.style.justifyContent = 'center';
+        }
+    },
+
+    preventHorizontalScroll() {
+        // Prevent horizontal scrolling on all elements
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(element => {
+            element.style.maxWidth = '100%';
+            element.style.boxSizing = 'border-box';
+        });
+
+        // Ensure body and html don't allow horizontal scroll
+        document.body.style.overflowX = 'hidden';
+        document.documentElement.style.overflowX = 'hidden';
+        document.body.style.width = '100vw';
+        document.body.style.minWidth = '100vw';
+        document.body.style.maxWidth = '100vw';
+    },
+
+    // Force layout refresh
+    refreshLayout() {
+        // Force browser to recalculate layout
+        document.body.style.display = 'none';
+        document.body.offsetHeight; // Trigger reflow
+        document.body.style.display = '';
+
+        // Re-apply zoom styles
+        this.applyZoomStyles();
+    }
+};
+
+// Initialize zoom handler when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize zoom handler after a short delay to ensure DOM is fully loaded
+    setTimeout(() => {
+        if (typeof ZoomHandler !== 'undefined') {
+            ZoomHandler.init();
+        }
+    }, 100);
+});
+
+// Also initialize on window load to catch any late DOM changes
+window.addEventListener('load', function() {
+    setTimeout(() => {
+        if (typeof ZoomHandler !== 'undefined') {
+            ZoomHandler.refreshLayout();
+        }
+    }, 500);
+});

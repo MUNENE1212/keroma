@@ -48,7 +48,7 @@
 ### 📱 Responsive Design
 - **Mobile-First Architecture**: Optimized for all screen sizes
 - **Progressive Web App**: Installable on mobile devices with offline capabilities
-- **Touch-Optimized**: Swipe gestures and touch-friendly interactions
+- **Touch-Optimized**: Touch-friendly interactions and gestures
 - **Accessibility First**: WCAG 2.1 AA compliant with screen reader support
 - **Cross-Browser**: Tested on Chrome, Firefox, Safari, and Edge
 
@@ -92,11 +92,6 @@ ke-rouma/
 │
 ├── templates/            # Jinja2 HTML templates
 │   └── index.html        # Single-page application template
-│
-├── mobile-app/           # React Native mobile application
-│   ├── src/              # Source code
-│   ├── App.tsx           # Main application component
-│   └── package.json      # Dependencies and scripts
 │
 ├── tests/                # Test suite
 │   └── test_integrations.py # Integration tests
@@ -208,7 +203,6 @@ DEBUG=true
 | **Styling** | CSS3 + Animations | Latest | Glassmorphism design with custom fonts |
 | **Typography** | Google Fonts | Latest | Inter, Playfair Display, Nunito |
 | **Icons** | Font Awesome | 6.5+ | Consistent iconography |
-| **Mobile** | React Native | Latest | Cross-platform mobile application |
 
 ### Interactive Features
 
@@ -326,38 +320,6 @@ tests/
 └── test_integrations.py  # End-to-end integration tests
 ```
 
-## 📱 Mobile App
-
-### Setup
-
-```bash
-cd mobile-app
-npm install
-npx expo install
-```
-
-### Development
-
-```bash
-# Start development server
-npx expo start
-
-# Run on specific platform
-npx expo start --ios
-npx expo start --android
-
-# Build for production
-npx expo build:android
-npx expo build:ios
-```
-
-### Mobile Features
-
-- **Offline Recipe Access**: Download recipes for offline viewing
-- **Voice Cooking Assistant**: Hands-free cooking instructions
-- **Smart Shopping Lists**: Auto-generated shopping lists
-- **Recipe Sharing**: Share recipes via social media
-- **Push Notifications**: Cooking timers and recipe recommendations
 
 ## 🚀 Deployment
 

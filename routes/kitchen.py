@@ -1,7 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
+from models.database import get_database
+from routes.auth import get_current_user
+from models.user import UserService
+from bson import ObjectId
 
 router = APIRouter()
 
@@ -214,7 +218,7 @@ def extract_techniques(instruction):
     """Extract cooking techniques"""
     techniques = []
     instruction_lower = instruction.lower()
-    
+
     if "sauté" in instruction_lower:
         techniques.append("sautéing")
     if "boil" in instruction_lower:
@@ -223,5 +227,98 @@ def extract_techniques(instruction):
         techniques.append("simmering")
     if "chop" in instruction_lower:
         techniques.append("knife skills")
-    
+
     return techniques if techniques else ["basic cooking"]
+
+@router.get("/stats")
+async def get_kitchen_stats(current_user: dict = Depends(get_current_user)):
+    """Get user's kitchen statistics"""
+    try:
+        db = await get_database()
+        user_id = current_user.get("id") or current_user.get("_id")
+
+        if not user_id:
+            raise HTTPException(status_code=401, detail="User not authenticated")
+
+        # Get cooking sessions count
+        cooking_sessions_count = await db.cooking_sessions.count_documents({"user_id": str(user_id)})
+
+        # Get saved recipes count
+        user = await db.users.find_one({"_id": ObjectId(user_id)})
+        saved_recipes_count = len(user.get("saved_recipes", [])) if user else 0
+
+        # Get favorite recipes count
+        favorite_recipes_count = len(user.get("favorite_recipes", [])) if user else 0
+
+        # Calculate cooking time saved (estimate based on sessions)
+        cooking_time_saved_hours = cooking_sessions_count * 0.5  # Assume 30 minutes saved per session
+        cooking_time_saved = f"{int(cooking_time_saved_hours)}h {int((cooking_time_saved_hours % 1) * 60)}m"
+
+        return {
+            "success": True,
+            "stats": {
+                "recipes_cooked": cooking_sessions_count,
+                "saved_recipes": saved_recipes_count,
+                "favorite_recipes": favorite_recipes_count,
+                "cooking_time_saved": cooking_time_saved
+            }
+        }
+
+    except Exception as e:
+        print(f"Error getting kitchen stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/favorite/{recipe_id}")
+async def add_favorite_recipe(recipe_id: str, current_user: dict = Depends(get_current_user)):
+    """Add recipe to user's favorites"""
+    try:
+        db = await get_database()
+        user_id = current_user.get("id") or current_user.get("_id")
+
+        if not user_id:
+            raise HTTPException(status_code=401, detail="User not authenticated")
+
+        # Check if recipe exists
+        recipe = await db.recipes.find_one({"_id": ObjectId(recipe_id)})
+        if not recipe:
+            raise HTTPException(status_code=404, detail="Recipe not found")
+
+        # Add to favorites if not already there
+        result = await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$addToSet": {"favorite_recipes": recipe_id}}
+        )
+
+        if result.modified_count > 0:
+            return {"success": True, "message": "Recipe added to favorites"}
+        else:
+            return {"success": True, "message": "Recipe already in favorites"}
+
+    except Exception as e:
+        print(f"Error adding favorite: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/favorite/{recipe_id}")
+async def remove_favorite_recipe(recipe_id: str, current_user: dict = Depends(get_current_user)):
+    """Remove recipe from user's favorites"""
+    try:
+        db = await get_database()
+        user_id = current_user.get("id") or current_user.get("_id")
+
+        if not user_id:
+            raise HTTPException(status_code=401, detail="User not authenticated")
+
+        # Remove from favorites
+        result = await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$pull": {"favorite_recipes": recipe_id}}
+        )
+
+        if result.modified_count > 0:
+            return {"success": True, "message": "Recipe removed from favorites"}
+        else:
+            return {"success": True, "message": "Recipe not in favorites"}
+
+    except Exception as e:
+        print(f"Error removing favorite: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

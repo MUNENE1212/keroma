@@ -46,6 +46,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Server-side log for diagnostics (provider chosen, fallback flag)
+  // eslint-disable-next-line no-console
+  console.log(
+    `[keroma/ai] provider=${result.provider} fallback=${result.fallbackUsed} ingredients=${parsed.data.ingredients.length}`
+  );
+
   return Response.json(
     {
       recipes: safe.data.recipes,
